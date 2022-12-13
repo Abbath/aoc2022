@@ -1,3 +1,4 @@
+use std::collections::VecDeque;
 use std::fs::File;
 use std::io::{prelude::*, BufReader};
 
@@ -227,10 +228,59 @@ fn day_05() {
     println!();
 }
 
+fn day_06() {
+    let file = File::open("06/input.txt").unwrap();
+    let mut reader = BufReader::new(file);
+    let mut line = String::new();
+    let _ = reader.read_line(&mut line);
+    let mut deque = VecDeque::new();
+    let mut res = 0usize;
+    let mut deque2 = VecDeque::new();
+    let mut res2 = 0usize;
+    for (i, c) in line.chars().enumerate() {
+        deque.push_back(c);
+        if deque.len() == 4 {
+            let mut diff = true;
+            for (i1, c1) in deque.iter().enumerate() {
+                for (i2, c2) in deque.iter().enumerate() {
+                    if i1 != i2 && c1 == c2 {
+                        diff = false;
+                    }
+                }
+            }
+            if diff {
+                res = i + 1;
+                break;
+            }
+            deque.pop_front();
+        }
+    }
+    for (i, c) in line.chars().enumerate() {
+        deque2.push_back(c);
+        if deque2.len() == 14 {
+            let mut diff = true;
+            for (i1, c1) in deque2.iter().enumerate() {
+                for (i2, c2) in deque2.iter().enumerate() {
+                    if i1 != i2 && c1 == c2 {
+                        diff = false;
+                    }
+                }
+            }
+            if diff {
+                res2 = i + 1;
+                break;
+            }
+            deque2.pop_front();
+        }
+    }
+    println!("{res} {res2}");
+}
+
 fn main() {
     day_01();
     day_02();
     day_03();
     day_04();
     day_05();
+    day_06();
 }
