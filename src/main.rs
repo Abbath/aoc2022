@@ -1,3 +1,4 @@
+use std::char;
 use std::collections::{HashMap, VecDeque};
 use std::fs::File;
 use std::io::{prelude::*, BufReader};
@@ -297,12 +298,9 @@ fn day_07() {
             let key = "/".to_string() + &stack.join("/").to_owned();
             *bins.entry(key.clone()).or_insert(0) += n;
             let mut to_add: Vec<(String, u64)> = vec![];
-            for (k, v) in bins.iter() {
+            for k in bins.keys() {
                 if k != &key && key.starts_with(k) {
                     to_add.push((k.to_string(), n));
-                }
-                if k != &key && k.starts_with(&key) {
-                    to_add.push((k.to_string(), *v));
                 }
             }
             for (k, v) in to_add {
@@ -326,6 +324,54 @@ fn day_07() {
     println!("{sum} {smallest}");
 }
 
+fn day_08() {
+    let file = File::open("08/input.txt").unwrap();
+    let reader = BufReader::new(file);
+    let lines: Vec<String> = reader.lines().flatten().collect();
+    let mut mat: Vec<u64> = Vec::new();
+    mat.resize(lines.len() * lines[0].len(), 0);
+    for (i, line) in lines.iter().enumerate() {
+        for (j, c) in line.chars().enumerate() {
+            mat[i * line.len() + j] = c as u64 - '0' as u64;
+        }
+    }
+    let mut sum = 0u64;
+    for i in 0..lines.len() {
+        for j in 0..lines[0].len() {
+            if i == 0 || j == 0 || i == lines.len() - 1 || j == lines[0].len() - 1 {
+                sum += 1;
+                continue;
+            }
+            let a = mat
+                .iter()
+                .skip(i * lines[0].len())
+                .take(j)
+                .all(|x| *x < mat[i * lines[0].len() + j]);
+            let b = mat
+                .iter()
+                .skip(i * lines[0].len() + j + 1)
+                .take(lines[0].len() - j - 1)
+                .all(|x| *x < mat[i * lines[0].len() + j]);
+            let c = mat
+                .iter()
+                .skip(j)
+                .step_by(lines[0].len())
+                .take(i)
+                .all(|x| *x < mat[i * lines[0].len() + j]);
+            let d = mat
+                .iter()
+                .skip((i + 1) * lines[0].len() + j)
+                .step_by(lines[0].len())
+                .take(lines.len() - i - 1)
+                .all(|x| *x < mat[i * lines[0].len() + j]);
+            if a || b || c || d {
+                sum += 1;
+            }
+        }
+    }
+    println!("{sum}");
+}
+
 fn main() {
     day_01();
     day_02();
@@ -334,4 +380,5 @@ fn main() {
     day_05();
     day_06();
     day_07();
+    day_08();
 }
