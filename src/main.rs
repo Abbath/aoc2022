@@ -561,6 +561,79 @@ fn day_10() {
     println!("{sum}");
 }
 
+fn day_11() {
+    let file = File::open("11/input.txt").unwrap();
+    let reader = BufReader::new(file);
+    let lines: Vec<String> = reader.lines().flatten().collect();
+    let mut si: Vec<VecDeque<u64>> = vec![];
+    let mut op: Vec<(i64, i64, i64)> = vec![];
+    let mut tests: Vec<(u64, u64, u64)> = vec![];
+    let mut test = 0u64;
+    let mut test_t = 0u64;
+    let mut counter = 0usize;
+    for line in lines {
+        let words: Vec<&str> = line.trim().split(' ').collect();
+        if words[0] == "Starting" {
+            si.push(VecDeque::new());
+             if words.len() == 3 {
+                si[counter].push_back(words[2].parse::<u64>().unwrap());
+             }else {
+                for i in 2..words.len() - 1 {
+                    si[counter].push_back(words[i][..words[i].len()-1].parse::<u64>().unwrap());
+                }
+                si[counter].push_back(words.last().unwrap().parse::<u64>().unwrap());
+             }
+        }
+        if words[0] == "Operation:" {
+            let op1 = if words[3] == "old" {
+                -1
+            }else{
+                words[3].parse::<i64>().unwrap()
+            };
+            let op2 = if words[4] == "+" {
+                0
+            }else{
+                1
+            };
+            let op3 = if words[5] == "old" {
+                -1
+            }else{
+                words[5].parse::<i64>().unwrap()
+            };
+            op.push((op1, op2, op3));
+        }
+        if words[0] == "Test:" {
+            test = words.last().unwrap().parse::<u64>().unwrap();
+        }
+        if words[0] == "If" && words[1] == "true:" {
+            test_t = words.last().unwrap().parse::<u64>().unwrap();
+        }
+        if words[0] == "If" && words[1] == "false:" {
+            let test_f = words.last().unwrap().parse::<u64>().unwrap();
+            tests.push((test, test_t, test_f));
+            counter += 1;
+        }
+    }
+    let mut items: Vec<u64> = vec![0; si.len()];
+    for _ in 0..20 {
+        for j in 0..si.len() {
+            let l = si[j].len();
+            for _ in 0..l {
+                items[j] += 1;
+                let old = si[j].pop_front().unwrap();
+                let new = (if op[j].1 == 0 {|x, y| x + y } else {|x, y| x * y })(if op[j].0 == -1 {old} else {op[j].0 as u64}, if op[j].2 == -1 {old} else {op[j].2 as u64}) / 3; 
+                if new % tests[j].0 == 0 {
+                    si[tests[j].1 as usize].push_back(new);
+                }else{
+                    si[tests[j].2 as usize].push_back(new);
+                }
+            }
+        }
+    }
+    items.sort();
+    println!("{}", items.pop().unwrap()*items.pop().unwrap());
+}
+
 fn main() {
     day_01();
     day_02();
@@ -572,4 +645,5 @@ fn main() {
     day_08();
     day_09();
     day_10();
+    day_11();
 }
