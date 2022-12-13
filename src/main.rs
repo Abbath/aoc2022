@@ -1,5 +1,5 @@
 use std::char;
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::fs::File;
 use std::io::{prelude::*, BufReader};
 
@@ -415,6 +415,101 @@ fn day_08() {
     println!("{sum} {max_score}");
 }
 
+fn day_09() {
+    let file = File::open("09/input.txt").unwrap();
+    let reader = BufReader::new(file);
+    let lines: Vec<String> = reader.lines().flatten().collect();
+    let mut positions: HashSet<(i64, i64)> = HashSet::new();
+    let mut positions2: HashSet<(i64, i64)> = HashSet::new();
+    let mut head = vec![0i64, 0i64];
+    let mut tail = vec![0i64, 0i64];
+    let mut long_tail: Vec<Vec<i64>> = vec![vec![0i64, 0i64]; 10];
+    positions.insert((tail[0], tail[1]));
+    positions2.insert((long_tail[9][0], long_tail[9][1]));
+    for line in lines {
+        let words: Vec<&str> = line.split(' ').collect();
+        let dir = words[0];
+        let dist = words[1].parse::<i64>().unwrap();
+        for _ in 0..dist {
+            match dir {
+                "R" => head[0] += 1,
+                "L" => head[0] -= 1,
+                "U" => head[1] += 1,
+                "D" => head[1] -= 1,
+                _ => panic!("Wrong direction!"),
+            }
+            match dir {
+                "R" => long_tail[0][0] += 1,
+                "L" => long_tail[0][0] -= 1,
+                "U" => long_tail[0][1] += 1,
+                "D" => long_tail[0][1] -= 1,
+                _ => panic!("Wrong direction!"),
+            }
+
+            if (head[0] - tail[0]).abs() == 2 && head[1] == tail[1] {
+                if head[0] > tail[0] {
+                    tail[0] += 1;
+                } else {
+                    tail[0] -= 1;
+                }
+            } else if (head[1] - tail[1]).abs() == 2 && head[0] == tail[0] {
+                if head[1] > tail[1] {
+                    tail[1] += 1;
+                } else {
+                    tail[1] -= 1;
+                }
+            } else if (head[0] - tail[0]).abs() > 1 || (head[1] - tail[1]).abs() > 1 {
+                if head[0] > tail[0] {
+                    tail[0] += 1;
+                } else {
+                    tail[0] -= 1;
+                }
+                if head[1] > tail[1] {
+                    tail[1] += 1;
+                } else {
+                    tail[1] -= 1;
+                }
+            }
+
+            for i in 1..10 {
+                if (long_tail[i - 1][0] - long_tail[i][0]).abs() == 2
+                    && long_tail[i - 1][1] == long_tail[i][1]
+                {
+                    if long_tail[i - 1][0] > long_tail[i][0] {
+                        long_tail[i][0] += 1;
+                    } else {
+                        long_tail[i][0] -= 1;
+                    }
+                } else if (long_tail[i - 1][1] - long_tail[i][1]).abs() == 2
+                    && long_tail[i - 1][0] == long_tail[i][0]
+                {
+                    if long_tail[i - 1][1] > long_tail[i][1] {
+                        long_tail[i][1] += 1;
+                    } else {
+                        long_tail[i][1] -= 1;
+                    }
+                } else if (long_tail[i - 1][0] - long_tail[i][0]).abs() > 1
+                    || (long_tail[i - 1][1] - long_tail[i][1]).abs() > 1
+                {
+                    if long_tail[i - 1][0] > long_tail[i][0] {
+                        long_tail[i][0] += 1;
+                    } else {
+                        long_tail[i][0] -= 1;
+                    }
+                    if long_tail[i - 1][1] > long_tail[i][1] {
+                        long_tail[i][1] += 1;
+                    } else {
+                        long_tail[i][1] -= 1;
+                    }
+                }
+            }
+            positions2.insert((long_tail[9][0], long_tail[9][1]));
+            positions.insert((tail[0], tail[1]));
+        }
+    }
+    println!("{} {}", positions.len(), positions2.len());
+}
+
 fn main() {
     day_01();
     day_02();
@@ -424,4 +519,5 @@ fn main() {
     day_06();
     day_07();
     day_08();
+    day_09();
 }
