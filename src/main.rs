@@ -276,6 +276,37 @@ fn day_06() {
     println!("{res} {res2}");
 }
 
+fn day_07() {
+    let file = File::open("test_input.txt").unwrap();
+    let reader = BufReader::new(file);
+    let lines: Vec<String> = reader.lines().flatten().collect();
+    struct Dir {
+        name: String,
+        files: Vec<u64>,
+        children: Vec<Dir>
+    }
+    impl Dir {
+        fn new(name: String) -> Dir {
+            Dir {
+                name:  name,
+                files: vec![],
+                children: vec![]
+            }
+        }
+    }
+    let mut curdir: String = String::new();
+    let mut stack: Vec<String> = vec![];
+    for line in lines.iter() {
+        if line.starts_with("$") {
+            let words: Vec<&str> = line.split(' ').collect();
+            if words[1] == "cd" {
+                curdir = words[2].to_string();
+            }
+        }
+        
+    }
+}
+
 fn main() {
     day_01();
     day_02();
@@ -283,4 +314,5 @@ fn main() {
     day_04();
     day_05();
     day_06();
+    day_07();
 }
