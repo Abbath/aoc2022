@@ -10,9 +10,9 @@ fn day_01() {
     let mut max_num3 = 0u64;
 
     let mut sum = 0u64;
-    for (n, line) in lines.iter().enumerate() {
+    for line in lines.iter() {
         sum += line.parse::<u64>().unwrap_or_default();
-        if line.is_empty() || n == lines.len() - 1 {
+        if line.is_empty() {
             if sum > max_num1 {
                 max_num3 = max_num2;
                 max_num2 = max_num1;
@@ -168,9 +168,69 @@ fn day_04() {
     println!("{sum} {sum2}")
 }
 
+fn day_05() {
+    let file = File::open("05/input.txt").unwrap();
+    let reader = BufReader::new(file);
+    let lines: Vec<String> = reader.lines().flatten().collect();
+    let mut crates: Vec<Vec<char>> = vec![];
+    let mut sp: bool = false;
+    let mut moves: Vec<(u64, u64, u64)> = vec![];
+    for line in lines.iter() {
+        if line.is_empty() {
+            sp = true;
+            continue;
+        }
+        if !sp {
+            for i in (1..line.len()).step_by(4) {
+                let c = line.chars().nth(i).unwrap();
+                if c.is_alphabetic() {
+                    if crates.len() < i / 4 + 1 {
+                        crates.resize(i / 4 + 1, vec![]);
+                    }
+                    crates[i / 4].push(c);
+                }
+            }
+        } else {
+            let words: Vec<&str> = line.split(' ').collect();
+            let (n, f, t) = (
+                words[1].parse::<u64>().unwrap(),
+                words[3].parse::<u64>().unwrap(),
+                words[5].parse::<u64>().unwrap(),
+            );
+            moves.push((n, f, t));
+        }
+    }
+    let mut reversed: Vec<Vec<char>> = vec![];
+    for v in crates.iter() {
+        reversed.push(v.iter().rev().cloned().collect());
+    }
+    let mut reversed2 = reversed.clone();
+    for (n, f, t) in moves {
+        let mut stack: Vec<char> = vec![];
+        for _ in 0..n {
+            let val = reversed[(f - 1) as usize].pop().unwrap();
+            let val2 = reversed2[(f - 1) as usize].pop().unwrap();
+            reversed[(t - 1) as usize].push(val);
+            stack.push(val2);
+        }
+        for val in stack.iter().rev() {
+            reversed2[(t - 1) as usize].push(val.to_owned());
+        }
+    }
+    for v in reversed.iter() {
+        print!("{}", v.last().unwrap());
+    }
+    print!(" ");
+    for v in reversed2.iter() {
+        print!("{}", v.last().unwrap());
+    }
+    println!();
+}
+
 fn main() {
     day_01();
     day_02();
     day_03();
     day_04();
+    day_05();
 }
