@@ -335,41 +335,84 @@ fn day_08() {
             mat[i * line.len() + j] = c as u64 - '0' as u64;
         }
     }
+    let h = lines.len();
+    let w = lines[0].len();
     let mut sum = 0u64;
-    for i in 0..lines.len() {
-        for j in 0..lines[0].len() {
-            if i == 0 || j == 0 || i == lines.len() - 1 || j == lines[0].len() - 1 {
+    let mut max_score = 0u64;
+    for i in 0..h {
+        for j in 0..w {
+            if i == 0 || j == 0 || i == h - 1 || j == w - 1 {
                 sum += 1;
                 continue;
             }
-            let a = mat
-                .iter()
-                .skip(i * lines[0].len())
-                .take(j)
-                .all(|x| *x < mat[i * lines[0].len() + j]);
+            let a = mat.iter().skip(i * w).take(j).all(|x| *x < mat[i * w + j]);
             let b = mat
                 .iter()
-                .skip(i * lines[0].len() + j + 1)
-                .take(lines[0].len() - j - 1)
-                .all(|x| *x < mat[i * lines[0].len() + j]);
+                .skip(i * w + j + 1)
+                .take(w - j - 1)
+                .all(|x| *x < mat[i * w + j]);
             let c = mat
                 .iter()
                 .skip(j)
-                .step_by(lines[0].len())
+                .step_by(w)
                 .take(i)
-                .all(|x| *x < mat[i * lines[0].len() + j]);
+                .all(|x| *x < mat[i * w + j]);
             let d = mat
                 .iter()
-                .skip((i + 1) * lines[0].len() + j)
-                .step_by(lines[0].len())
-                .take(lines.len() - i - 1)
-                .all(|x| *x < mat[i * lines[0].len() + j]);
+                .skip((i + 1) * w + j)
+                .step_by(w)
+                .take(h - i - 1)
+                .all(|x| *x < mat[i * w + j]);
             if a || b || c || d {
                 sum += 1;
             }
+            let mut a1 = mat
+                .iter()
+                .skip(i * w)
+                .take(j)
+                .rev()
+                .take_while(|x| **x < mat[i * w + j])
+                .count();
+            if a1 < j {
+                a1 += 1;
+            }
+            let mut b1 = mat
+                .iter()
+                .skip(i * w + j + 1)
+                .take(w - j - 1)
+                .take_while(|x| **x < mat[i * w + j])
+                .count();
+            if b1 < w - j - 1 {
+                b1 += 1;
+            }
+            let mut c1 = mat
+                .iter()
+                .skip(j)
+                .step_by(w)
+                .take(i)
+                .rev()
+                .take_while(|x| **x < mat[i * w + j])
+                .count();
+            if c1 < i {
+                c1 += 1;
+            }
+            let mut d1 = mat
+                .iter()
+                .skip((i + 1) * w + j)
+                .step_by(w)
+                .take(h - i - 1)
+                .take_while(|x| **x < mat[i * w + j])
+                .count();
+            if d1 < h - i - 1 {
+                d1 += 1;
+            }
+            let score = a1 * b1 * c1 * d1;
+            if score > max_score as usize {
+                max_score = score as u64;
+            }
         }
     }
-    println!("{sum}");
+    println!("{sum} {max_score}");
 }
 
 fn main() {
