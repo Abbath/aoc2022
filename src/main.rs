@@ -1,4 +1,4 @@
-use std::collections::VecDeque;
+use std::collections::{HashMap, VecDeque};
 use std::fs::File;
 use std::io::{prelude::*, BufReader};
 
@@ -277,34 +277,53 @@ fn day_06() {
 }
 
 fn day_07() {
-    let file = File::open("test_input.txt").unwrap();
+    let file = File::open("07/input.txt").unwrap();
     let reader = BufReader::new(file);
     let lines: Vec<String> = reader.lines().flatten().collect();
-    struct Dir {
-        name: String,
-        files: Vec<u64>,
-        children: Vec<Dir>
-    }
-    impl Dir {
-        fn new(name: String) -> Dir {
-            Dir {
-                name:  name,
-                files: vec![],
-                children: vec![]
-            }
-        }
-    }
-    let mut curdir: String = String::new();
     let mut stack: Vec<String> = vec![];
+    let mut bins: HashMap<String, u64> = HashMap::new();
     for line in lines.iter() {
-        if line.starts_with("$") {
-            let words: Vec<&str> = line.split(' ').collect();
-            if words[1] == "cd" {
-                curdir = words[2].to_string();
+        let words: Vec<&str> = line.split(' ').collect();
+        if line.starts_with('$') && words[1] == "cd" {
+            if words[2] == ".." {
+                stack.pop();
+            } else if words[2] != "/" {
+                stack.push(words[2].to_string());
+                let key = "/".to_string() + &stack.join("/").to_owned();
+                *bins.entry(key).or_insert(0) = 0;
             }
         }
-        
+        if let Ok(n) = words[0].parse::<u64>() {
+            let key = "/".to_string() + &stack.join("/").to_owned();
+            *bins.entry(key.clone()).or_insert(0) += n;
+            let mut to_add: Vec<(String, u64)> = vec![];
+            for (k, v) in bins.iter() {
+                if k != &key && key.starts_with(k) {
+                    to_add.push((k.to_string(), n));
+                }
+                if k != &key && k.starts_with(&key) {
+                    to_add.push((k.to_string(), *v));
+                }
+            }
+            for (k, v) in to_add {
+                *bins.entry(k).or_default() += v;
+            }
+        }
     }
+    let cap = 70000000u64;
+    let needed = 30000000u64;
+    let free_space = cap - bins["/"];
+    let mut sum = 0u64;
+    let mut smallest = bins["/"];
+    for bin in bins.values() {
+        if *bin < 100000u64 {
+            sum += bin;
+        }
+        if free_space + *bin >= needed && *bin < smallest {
+            smallest = *bin;
+        }
+    }
+    println!("{sum} {smallest}");
 }
 
 fn main() {
