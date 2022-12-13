@@ -535,22 +535,25 @@ fn day_10() {
                         skip = true;
                         val = words[1].parse::<i64>().unwrap();
                     }
-                }
+                },
                 None => dropout = true,
             }
-        } else {
+        }else{
             skip = false;
             x += val;
         }
         if cycle % 40 == 0 {
             println!();
         }
-        if cycle % 40 + 1 == x || cycle % 40 - 1 == x || cycle % 40 == x {
+        if cycle % 40 + 1 == x  || cycle % 40 - 1 == x  || cycle % 40 == x  {
             print!("#");
-        } else {
+        }else{
             print!(".");
         }
-        cycle += 1;
+        if cycle == 1 {
+            print!("#");
+        }
+        cycle += 1; 
         if dropout {
             break;
         }
