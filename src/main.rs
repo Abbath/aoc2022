@@ -510,6 +510,54 @@ fn day_09() {
     println!("{} {}", positions.len(), positions2.len());
 }
 
+fn day_10() {
+    let file = File::open("10/input.txt").unwrap();
+    let reader = BufReader::new(file);
+    let lines: Vec<String> = reader.lines().flatten().collect();
+    let mut x = 1i64;
+    let mut cycle = 1i64;
+    let mut iter = lines.iter();
+    let mut skip = false;
+    let mut val = 0i64;
+    let cycles = vec![20, 60, 100, 140, 180, 220];
+    let mut sum = 0i64;
+    let mut dropout = false;
+    loop {
+        if cycles.contains(&cycle) {
+            sum += x * cycle as i64;
+        }
+        if !skip {
+            let lineop = iter.next();
+            match lineop {
+                Some(line) => {
+                    let words: Vec<&str> = line.split(' ').collect();
+                    if words[0] == "addx" {
+                        skip = true;
+                        val = words[1].parse::<i64>().unwrap();
+                    }
+                }
+                None => dropout = true,
+            }
+        } else {
+            skip = false;
+            x += val;
+        }
+        if cycle % 40 == 0 {
+            println!();
+        }
+        if cycle % 40 + 1 == x || cycle % 40 - 1 == x || cycle % 40 == x {
+            print!("#");
+        } else {
+            print!(".");
+        }
+        cycle += 1;
+        if dropout {
+            break;
+        }
+    }
+    println!("{sum}");
+}
+
 fn main() {
     day_01();
     day_02();
@@ -520,4 +568,5 @@ fn main() {
     day_07();
     day_08();
     day_09();
+    day_10();
 }
