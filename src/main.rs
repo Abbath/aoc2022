@@ -1,5 +1,6 @@
 use std::char;
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::cmp::Reverse;
+use std::collections::{BinaryHeap, HashMap, HashSet, VecDeque};
 use std::fs::File;
 use std::io::{prelude::*, BufReader};
 
@@ -668,6 +669,134 @@ fn day_11() {
     );
 }
 
+fn day_12() {
+    let file = File::open("12/input.txt").unwrap();
+    let reader = BufReader::new(file);
+    let lines: Vec<String> = reader.lines().flatten().collect();
+    let h = lines.len();
+    let w = lines[0].len();
+    let mut mat = vec![0; w * h];
+    let mut start = (0usize, 0usize);
+    let mut finish = (0usize, 0usize);
+    for (i, line) in lines.iter().enumerate() {
+        for (j, c) in line.chars().enumerate() {
+            match c {
+                'S' => {
+                    mat[i * w + j] = 0;
+                    start = (i, j);
+                }
+                'E' => {
+                    mat[i * w + j] = 25;
+                    finish = (i, j);
+                }
+                _ => mat[i * w + j] = c as u64 - 'a' as u64,
+            }
+        }
+    }
+    let neighbours = |field: &Vec<u64>, idx: usize, h: usize, w: usize| -> Vec<(usize, usize)> {
+        let mut res = Vec::new();
+        let i = idx / w;
+        let j = idx % w;
+        if i > 0 {
+            res.push((
+                (i - 1) * w + j,
+                if field[idx] as i64 - field[(i - 1) * w + j] as i64 >= -1 {
+                    1
+                } else {
+                    w * h * 10
+                },
+            ));
+        }
+        if j > 0 {
+            res.push((
+                i * w + j - 1,
+                if field[idx] as i64 - field[i * w + j - 1] as i64 >= -1 {
+                    1
+                } else {
+                    w * h * 10
+                },
+            ));
+        }
+        if i < h - 1 {
+            res.push((
+                (i + 1) * w + j,
+                if field[idx] as i64 - field[(i + 1) * w + j] as i64 >= -1 {
+                    1
+                } else {
+                    w * h * 10
+                },
+            ));
+        }
+        if j < w - 1 {
+            res.push((
+                i * w + j + 1,
+                if field[idx] as i64 - field[i * w + j + 1] as i64 >= -1 {
+                    1
+                } else {
+                    w * h * 10
+                },
+            ));
+        }
+        res
+    };
+    fn reconstruct_path(came_from: &HashMap<usize, usize>, current: usize) -> VecDeque<usize> {
+        let mut total_path = VecDeque::from(vec![current]);
+        let mut curr = current;
+        while came_from.contains_key(&curr) {
+            curr = came_from[&curr];
+            total_path.push_front(curr);
+        }
+        total_path
+    }
+    let astar =
+        |field: &Vec<u64>, h: usize, w: usize, start: (usize, usize), finish: (usize, usize)| {
+            let hh = |u: usize| {
+                (finish.0 as i64 - (u / w) as i64).abs() + (finish.1 as i64 - (u % w) as i64).abs()
+            };
+            let rows = h * w;
+            let mut open_set = BinaryHeap::new();
+            let mut came_from: HashMap<usize, usize> = HashMap::new();
+            open_set.push((Reverse(0), start.0 * w + start.1));
+            let mut g_score = vec![rows * 10; rows];
+            g_score[start.0 * w + start.1] = 0;
+            let mut f_score = vec![rows * 10; rows];
+            f_score[start.0 * w + start.1] = finish.0 + finish.1;
+            let mut res = 0;
+            while let Some((Reverse(_), idx)) = open_set.pop() {
+                if idx == finish.0 * w + finish.1 {
+                    res = idx;
+                    break;
+                }
+                for (k, v) in neighbours(field, idx, h, w) {
+                    let new_score = g_score[idx] + v as usize;
+                    if new_score < g_score[k] {
+                        came_from.insert(k, idx);
+                        g_score[k] = new_score;
+                        f_score[k] = new_score + hh(k) as usize;
+                        open_set.push((Reverse(f_score[k]), k));
+                    }
+                }
+            }
+            let l = reconstruct_path(&came_from, res).len() - 1;
+            if l == 0 {
+                usize::MAX
+            } else {
+                l
+            }
+        };
+    print!("{} ", astar(&mat, h, w, start, finish));
+    let mut minp = usize::MAX;
+    for i in 0..h {
+        for j in 0..w {
+            if mat[i * w + j] == 0 {
+                let s = astar(&mat, h, w, (i, j), finish);
+                minp = s.min(minp);
+            }
+        }
+    }
+    println!("{}", minp);
+}
+
 fn main() {
     day_01();
     day_02();
@@ -680,4 +809,5 @@ fn main() {
     day_09();
     day_10();
     day_11();
+    day_12();
 }
