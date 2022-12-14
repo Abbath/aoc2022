@@ -797,6 +797,129 @@ fn day_12() {
     println!("{}", minp);
 }
 
+fn day_13() {
+    let file = File::open("13/input.txt").unwrap();
+    let reader = BufReader::new(file);
+    let lines: Vec<String> = reader.lines().flatten().collect();
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    enum Packet {
+        List(Vec<Packet>),
+        Num(u64)
+    }
+    use Packet::{List, Num};
+    fn parse_int(s: &[char], offset: usize) -> (Packet, usize) {
+        let mut res = String::from("");
+        let mut i = offset;
+        let mut exit = false;
+        loop {
+            if i == s.len() {
+                i -= 1;
+                break;
+            }
+            let c = s[i];
+            if c.is_digit(10) {
+                if exit {
+                    break;
+                }
+                res.push(c);
+            }
+            if c == '[' && exit {
+                break;
+            }
+            if c == ',' {
+                exit = true;
+            }
+            if c == ']' {
+                break;
+            }
+            i += 1;
+        }
+        (Num(res.parse().unwrap()), i)
+    }
+    fn parse_list(s: &[char], offset: usize) -> (Packet, usize) {
+        let mut new_offset = offset + 1;
+        if s[offset] == '[' {
+            let mut l = vec![];
+            loop {
+                if s[new_offset] == '[' {
+                    let (p1, o1) = parse_list(s, new_offset);
+                    new_offset = o1;
+                    l.push(p1);
+                } else if s[new_offset] == ']' { 
+                    new_offset += 1;
+                    if new_offset < s.len() && s[new_offset] == ',' {
+                        new_offset += 1;
+                    } 
+                    break;
+                }else {
+                    let (n1, o1) = parse_int(s, new_offset);
+                    new_offset = o1;
+                    l.push(n1);    
+                };
+                if s[new_offset] == ']' {
+                    new_offset += 1;
+                    if new_offset < s.len() && s[new_offset] == ',' {
+                        new_offset += 1;
+                    } 
+                    break;
+                }
+            }
+            (List(l), new_offset)
+        } else {
+            panic!("ZHEPA!");
+        }
+    }
+    fn compare(p1: &Packet, p2: &Packet) -> Option<bool> {
+        match (p1, p2) {
+            (Num(a), Num(b)) => {
+                if a < b {
+                    Some(true)
+                }else if a > b {
+                    Some(false)
+                }else{
+                    None
+                }
+            }
+            (Num(_), List(_)) => compare(&List(vec![p1.clone()]), &p2),
+            (List(_), Num(_)) => compare(&p1, &List(vec![p2.clone()])),
+            (List(a), List(b)) => {
+                for i in 0..a.len().max(b.len()) {
+                    if i == a.len() {
+                        return Some(true);
+                    }
+                    if i == b.len() {
+                        return Some(false);
+                    }
+                    if let Some(x) = compare(&a[i], &b[i]) {
+                        return Some(x);
+                    }
+                }
+                None
+            }
+        }
+    }
+    let mut packets = vec![];
+    let mut counter = 1;
+    let mut sum = 0;
+    for line in lines.iter() {
+        if !line.trim().is_empty() {
+            let chars: Vec<char> = line.chars().collect();
+            println!("{:?}", parse_list(&chars, 0));
+            packets.push(parse_list(&chars, 0));
+        }else{
+            let res = compare(&packets[0].0,  &packets[1].0);
+            if let Some(x) = res {
+                if x {
+                    sum += counter;
+                }
+            }
+            counter += 1;
+            packets.clear();
+        }
+    }
+    println!("{sum}");
+}
+
 fn main() {
     day_01();
     day_02();
@@ -810,4 +933,5 @@ fn main() {
     day_10();
     day_11();
     day_12();
+    day_13();
 }
