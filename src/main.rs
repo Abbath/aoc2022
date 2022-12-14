@@ -535,25 +535,25 @@ fn day_10() {
                         skip = true;
                         val = words[1].parse::<i64>().unwrap();
                     }
-                },
+                }
                 None => dropout = true,
             }
-        }else{
+        } else {
             skip = false;
             x += val;
         }
         if cycle % 40 == 0 {
             println!();
         }
-        if cycle % 40 + 1 == x  || cycle % 40 - 1 == x  || cycle % 40 == x  {
+        if cycle % 40 + 1 == x || cycle % 40 - 1 == x || cycle % 40 == x {
             print!("#");
-        }else{
+        } else {
             print!(".");
         }
         if cycle == 1 {
             print!("#");
         }
-        cycle += 1; 
+        cycle += 1;
         if dropout {
             break;
         }
@@ -571,39 +571,37 @@ fn day_11() {
     let mut test = 0u64;
     let mut test_t = 0u64;
     let mut counter = 0usize;
+    let mut lcm = 1u64;
     for line in lines {
         let words: Vec<&str> = line.trim().split(' ').collect();
         if words[0] == "Starting" {
             si.push(VecDeque::new());
-             if words.len() == 3 {
+            if words.len() == 3 {
                 si[counter].push_back(words[2].parse::<u64>().unwrap());
-             }else {
-                for i in 2..words.len() - 1 {
-                    si[counter].push_back(words[i][..words[i].len()-1].parse::<u64>().unwrap());
+            } else {
+                for item in words.iter().take(words.len() - 1).skip(2) {
+                    si[counter].push_back(item[..item.len() - 1].parse::<u64>().unwrap());
                 }
                 si[counter].push_back(words.last().unwrap().parse::<u64>().unwrap());
-             }
+            }
         }
         if words[0] == "Operation:" {
             let op1 = if words[3] == "old" {
                 -1
-            }else{
+            } else {
                 words[3].parse::<i64>().unwrap()
             };
-            let op2 = if words[4] == "+" {
-                0
-            }else{
-                1
-            };
+            let op2 = if words[4] == "+" { 0 } else { 1 };
             let op3 = if words[5] == "old" {
                 -1
-            }else{
+            } else {
                 words[5].parse::<i64>().unwrap()
             };
             op.push((op1, op2, op3));
         }
         if words[0] == "Test:" {
             test = words.last().unwrap().parse::<u64>().unwrap();
+            lcm *= test;
         }
         if words[0] == "If" && words[1] == "true:" {
             test_t = words.last().unwrap().parse::<u64>().unwrap();
@@ -614,6 +612,7 @@ fn day_11() {
             counter += 1;
         }
     }
+    let mut si2 = si.clone();
     let mut items: Vec<u64> = vec![0; si.len()];
     for _ in 0..20 {
         for j in 0..si.len() {
@@ -621,17 +620,52 @@ fn day_11() {
             for _ in 0..l {
                 items[j] += 1;
                 let old = si[j].pop_front().unwrap();
-                let new = (if op[j].1 == 0 {|x, y| x + y } else {|x, y| x * y })(if op[j].0 == -1 {old} else {op[j].0 as u64}, if op[j].2 == -1 {old} else {op[j].2 as u64}) / 3; 
+                let new = (if op[j].1 == 0 {
+                    |x, y| x + y
+                } else {
+                    |x, y| x * y
+                })(
+                    if op[j].0 == -1 { old } else { op[j].0 as u64 },
+                    if op[j].2 == -1 { old } else { op[j].2 as u64 },
+                ) / 3;
                 if new % tests[j].0 == 0 {
                     si[tests[j].1 as usize].push_back(new);
-                }else{
+                } else {
                     si[tests[j].2 as usize].push_back(new);
                 }
             }
         }
     }
     items.sort();
-    println!("{}", items.pop().unwrap()*items.pop().unwrap());
+    let mut items2: Vec<u64> = vec![0; si2.len()];
+    for _ in 0..10000 {
+        for j in 0..si2.len() {
+            let l = si2[j].len();
+            for _ in 0..l {
+                items2[j] += 1;
+                let old = si2[j].pop_front().unwrap();
+                let new = (if op[j].1 == 0 {
+                    |x, y| x + y
+                } else {
+                    |x, y| x * y
+                })(
+                    if op[j].0 == -1 { old } else { op[j].0 as u64 },
+                    if op[j].2 == -1 { old } else { op[j].2 as u64 },
+                ) % lcm;
+                if new % tests[j].0 == 0 {
+                    si2[tests[j].1 as usize].push_back(new);
+                } else {
+                    si2[tests[j].2 as usize].push_back(new);
+                }
+            }
+        }
+    }
+    items2.sort();
+    println!(
+        "{} {}",
+        items.pop().unwrap() * items.pop().unwrap(),
+        items2.pop().unwrap() * items2.pop().unwrap()
+    );
 }
 
 fn main() {
