@@ -447,19 +447,19 @@ fn day_09() {
                 _ => panic!("Wrong direction!"),
             }
 
-            if (head[0] - tail[0]).abs() == 2 && head[1] == tail[1] {
+            if head[0].abs_diff(tail[0]) == 2 && head[1] == tail[1] {
                 if head[0] > tail[0] {
                     tail[0] += 1;
                 } else {
                     tail[0] -= 1;
                 }
-            } else if (head[1] - tail[1]).abs() == 2 && head[0] == tail[0] {
+            } else if head[1].abs_diff(tail[1]) == 2 && head[0] == tail[0] {
                 if head[1] > tail[1] {
                     tail[1] += 1;
                 } else {
                     tail[1] -= 1;
                 }
-            } else if (head[0] - tail[0]).abs() > 1 || (head[1] - tail[1]).abs() > 1 {
+            } else if head[0].abs_diff(tail[0]) > 1 || head[1].abs_diff(tail[1]) > 1 {
                 if head[0] > tail[0] {
                     tail[0] += 1;
                 } else {
@@ -473,7 +473,7 @@ fn day_09() {
             }
 
             for i in 1..10 {
-                if (long_tail[i - 1][0] - long_tail[i][0]).abs() == 2
+                if long_tail[i - 1][0].abs_diff(long_tail[i][0]) == 2
                     && long_tail[i - 1][1] == long_tail[i][1]
                 {
                     if long_tail[i - 1][0] > long_tail[i][0] {
@@ -481,7 +481,7 @@ fn day_09() {
                     } else {
                         long_tail[i][0] -= 1;
                     }
-                } else if (long_tail[i - 1][1] - long_tail[i][1]).abs() == 2
+                } else if long_tail[i - 1][1].abs_diff(long_tail[i][1]) == 2
                     && long_tail[i - 1][0] == long_tail[i][0]
                 {
                     if long_tail[i - 1][1] > long_tail[i][1] {
@@ -489,8 +489,8 @@ fn day_09() {
                     } else {
                         long_tail[i][1] -= 1;
                     }
-                } else if (long_tail[i - 1][0] - long_tail[i][0]).abs() > 1
-                    || (long_tail[i - 1][1] - long_tail[i][1]).abs() > 1
+                } else if long_tail[i - 1][0].abs_diff(long_tail[i][0]) > 1
+                    || long_tail[i - 1][1].abs_diff(long_tail[i][1]) > 1
                 {
                     if long_tail[i - 1][0] > long_tail[i][0] {
                         long_tail[i][0] += 1;
@@ -1057,6 +1057,94 @@ fn day_14() {
     println!("{sum} {sum2}");
 }
 
+fn day_15() {
+    let file = File::open("15/input.txt").unwrap();
+    let reader = BufReader::new(file);
+    let lines: Vec<String> = reader.lines().flatten().collect();
+    let mut sensors = vec![];
+    for line in lines.iter() {
+        let words: Vec<&str> = line.split(' ').collect();
+        let sx = words[2]
+            .split('=')
+            .nth(1)
+            .unwrap()
+            .strip_suffix(',')
+            .unwrap()
+            .parse::<i64>()
+            .unwrap();
+        let sy = words[3]
+            .split('=')
+            .nth(1)
+            .unwrap()
+            .strip_suffix(':')
+            .unwrap()
+            .parse::<i64>()
+            .unwrap();
+        let bx = words[8]
+            .split('=')
+            .nth(1)
+            .unwrap()
+            .strip_suffix(',')
+            .unwrap()
+            .parse::<i64>()
+            .unwrap();
+        let by = words[9].split('=').nth(1).unwrap().parse::<i64>().unwrap();
+        sensors.push(((sx, sy), (bx, by)));
+    }
+    let cy = 2000000i64;
+    type Span = (i64, i64);
+    fn process_line(sensors: &[(Span, Span)], cy: i64) -> u64 {
+        let mut spans = vec![];
+        for ((sx, sy), (bx, by)) in sensors.iter() {
+            let dx = sx.abs_diff(*bx) as i64 + sy.abs_diff(*by) as i64 - cy.abs_diff(*sy) as i64;
+            if dx >= 0 {
+                let minx = sx - dx;
+                let maxx = sx + dx;
+                spans.push((minx, maxx));
+            }
+        }
+        fn overlap(s1: (i64, i64), s2: (i64, i64)) -> Option<(i64, i64)> {
+            if s1.0 <= s2.0 && s1.1 >= s2.1 {
+                Some(s1)
+            } else if s2.0 <= s1.0 && s2.1 >= s1.1 {
+                Some(s2)
+            } else if s1.0 < s2.0 && s1.1 >= s2.0 {
+                Some((s1.0, s2.1))
+            } else if s2.0 < s1.0 && s2.1 >= s1.0 {
+                Some((s2.0, s1.1))
+            } else {
+                None
+            }
+        }
+        let mut old_len = spans.len();
+        loop {
+            let mut sa = spans[0];
+            let mut new_spans = vec![];
+            for s in spans.iter().skip(1) {
+                if let Some(ss) = overlap(sa, *s) {
+                    sa = ss;
+                } else {
+                    new_spans.push(*s);
+                }
+            }
+            new_spans.push(sa);
+            spans = new_spans;
+            if old_len == spans.len() {
+                break;
+            }
+            old_len = spans.len();
+        }
+        if spans.len() > 1 {
+            println!("{}", (spans[0].1 + 1) * 4000000 + cy);
+        }
+        spans.iter().map(|(s1, s2)| s1.abs_diff(*s2)).sum()
+    }
+    print!("{} ", process_line(&sensors, cy));
+    for i in 0..4000000 {
+        process_line(&sensors, i);
+    }
+}
+
 fn main() {
     day_01();
     day_02();
@@ -1072,4 +1160,5 @@ fn main() {
     day_12();
     day_13();
     day_14();
+    day_15();
 }
