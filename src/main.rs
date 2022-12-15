@@ -946,6 +946,117 @@ fn day_13() {
     println!("{sum} {prod}");
 }
 
+fn day_14() {
+    let file = File::open("14/input.txt").unwrap();
+    let reader = BufReader::new(file);
+    let lines: Vec<String> = reader.lines().flatten().collect();
+    let mut min_coord_x = usize::MAX;
+    let mut max_coord_x = 0usize;
+    let mut min_coord_y = usize::MAX;
+    let mut max_coord_y = 0usize;
+    let mut formations = vec![];
+    for line in lines.iter() {
+        let mut points = vec![];
+        let rocks: Vec<&str> = line.split(" -> ").collect();
+        for rock in rocks.iter() {
+            let coords: Vec<usize> = rock
+                .split(',')
+                .map(|s| s.parse::<usize>().unwrap())
+                .collect();
+            min_coord_x = min_coord_x.min(coords[0]);
+            min_coord_y = min_coord_y.min(coords[1]);
+            max_coord_x = max_coord_x.max(coords[0]);
+            max_coord_y = max_coord_y.max(coords[1]);
+            points.push((coords[0], coords[1]));
+        }
+        formations.push(points);
+    }
+    let h = max_coord_y + 3;
+    min_coord_x -= h;
+    max_coord_x += h;
+    let w = max_coord_x - min_coord_x + 1;
+    let ofx = |x: usize| x - min_coord_x;
+    let mut grid = vec![0usize; w * h];
+    for f in formations.iter() {
+        for i in 0..f.len() - 1 {
+            if f[i].0 == f[i + 1].0 {
+                for j in f[i].1.min(f[i + 1].1)..=f[i].1.max(f[i + 1].1) {
+                    grid[j * w + ofx(f[i].0)] = 1;
+                }
+            }
+            if f[i].1 == f[i + 1].1 {
+                for j in f[i].0.min(f[i + 1].0)..=f[i].0.max(f[i + 1].0) {
+                    grid[f[i].1 * w + ofx(j)] = 1;
+                }
+            }
+        }
+    }
+    let mut grid2 = grid.clone();
+    for i in 0..w {
+        grid2[(h - 1) * w + i] = 1;
+    }
+
+    let mut sum = 0;
+    'outer: loop {
+        let mut cur_x = ofx(500);
+        let mut cur_y = 0;
+        grid[cur_x] = 2;
+        loop {
+            if cur_y == h - 1 {
+                break 'outer;
+            }
+            if grid[cur_x + (cur_y + 1) * w] == 0 {
+                grid[cur_x + (cur_y + 1) * w] = 2;
+                grid[cur_x + cur_y * w] = 0;
+            } else if cur_x > 0 && grid[(cur_x - 1) + (cur_y + 1) * w] == 0 {
+                grid[(cur_x - 1) + (cur_y + 1) * w] = 2;
+                grid[cur_x + cur_y * w] = 0;
+                cur_x -= 1;
+            } else if cur_x < w - 1 && grid[(cur_x + 1) + (cur_y + 1) * w] == 0 {
+                grid[(cur_x + 1) + (cur_y + 1) * w] = 2;
+                grid[cur_x + cur_y * w] = 0;
+                cur_x += 1;
+            } else {
+                grid[cur_x + cur_y * w] = 3;
+                sum += 1;
+                break;
+            }
+            cur_y += 1;
+        }
+    }
+
+    let mut sum2 = 0;
+    loop {
+        let mut cur_x = ofx(500);
+        let mut cur_y = 0;
+        if grid2[ofx(500)] == 3 {
+            break;
+        }
+        grid2[cur_x] = 2;
+        loop {
+            if grid2[cur_x + (cur_y + 1) * w] == 0 {
+                grid2[cur_x + (cur_y + 1) * w] = 2;
+                grid2[cur_x + cur_y * w] = 0;
+            } else if cur_x > 0 && grid2[(cur_x - 1) + (cur_y + 1) * w] == 0 {
+                grid2[(cur_x - 1) + (cur_y + 1) * w] = 2;
+                grid2[cur_x + cur_y * w] = 0;
+                cur_x -= 1;
+            } else if cur_x < w - 1 && grid2[(cur_x + 1) + (cur_y + 1) * w] == 0 {
+                grid2[(cur_x + 1) + (cur_y + 1) * w] = 2;
+                grid2[cur_x + cur_y * w] = 0;
+                cur_x += 1;
+            } else {
+                grid2[cur_x + cur_y * w] = 3;
+                sum2 += 1;
+                break;
+            }
+            cur_y += 1;
+        }
+    }
+
+    println!("{sum} {sum2}");
+}
+
 fn main() {
     day_01();
     day_02();
@@ -960,4 +1071,5 @@ fn main() {
     day_11();
     day_12();
     day_13();
+    day_14();
 }
