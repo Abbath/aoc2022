@@ -804,7 +804,7 @@ fn day_13() {
     #[derive(Debug, Clone, PartialEq, Eq)]
     enum Packet {
         List(Vec<Packet>),
-        Num(u64)
+        Num(u64),
     }
     use Packet::{List, Num};
     fn parse_int(s: &[char], offset: usize) -> (Packet, usize) {
@@ -817,7 +817,7 @@ fn day_13() {
                 break;
             }
             let c = s[i];
-            if c.is_digit(10) {
+            if c.is_ascii_digit() {
                 if exit {
                     break;
                 }
@@ -845,22 +845,22 @@ fn day_13() {
                     let (p1, o1) = parse_list(s, new_offset);
                     new_offset = o1;
                     l.push(p1);
-                } else if s[new_offset] == ']' { 
+                } else if s[new_offset] == ']' {
                     new_offset += 1;
                     if new_offset < s.len() && s[new_offset] == ',' {
                         new_offset += 1;
-                    } 
+                    }
                     break;
-                }else {
+                } else {
                     let (n1, o1) = parse_int(s, new_offset);
                     new_offset = o1;
-                    l.push(n1);    
+                    l.push(n1);
                 };
                 if s[new_offset] == ']' {
                     new_offset += 1;
                     if new_offset < s.len() && s[new_offset] == ',' {
                         new_offset += 1;
-                    } 
+                    }
                     break;
                 }
             }
@@ -871,17 +871,13 @@ fn day_13() {
     }
     fn compare(p1: &Packet, p2: &Packet) -> Option<bool> {
         match (p1, p2) {
-            (Num(a), Num(b)) => {
-                if a < b {
-                    Some(true)
-                }else if a > b {
-                    Some(false)
-                }else{
-                    None
-                }
-            }
-            (Num(_), List(_)) => compare(&List(vec![p1.clone()]), &p2),
-            (List(_), Num(_)) => compare(&p1, &List(vec![p2.clone()])),
+            (Num(a), Num(b)) => match a.cmp(b) {
+                std::cmp::Ordering::Less => Some(true),
+                std::cmp::Ordering::Greater => Some(false),
+                std::cmp::Ordering::Equal => None,
+            },
+            (Num(_), List(_)) => compare(&List(vec![p1.clone()]), p2),
+            (List(_), Num(_)) => compare(p1, &List(vec![p2.clone()])),
             (List(a), List(b)) => {
                 for i in 0..a.len().max(b.len()) {
                     if i == a.len() {
@@ -899,15 +895,17 @@ fn day_13() {
         }
     }
     let mut packets = vec![];
+    let mut big_packets = vec![];
     let mut counter = 1;
     let mut sum = 0;
     for line in lines.iter() {
         if !line.trim().is_empty() {
             let chars: Vec<char> = line.chars().collect();
-            println!("{:?}", parse_list(&chars, 0));
             packets.push(parse_list(&chars, 0));
-        }else{
-            let res = compare(&packets[0].0,  &packets[1].0);
+        } else {
+            big_packets.push(packets[0].0.clone());
+            big_packets.push(packets[1].0.clone());
+            let res = compare(&packets[0].0, &packets[1].0);
             if let Some(x) = res {
                 if x {
                     sum += counter;
@@ -917,7 +915,35 @@ fn day_13() {
             packets.clear();
         }
     }
-    println!("{sum}");
+    big_packets.push(packets[0].0.clone());
+    big_packets.push(packets[1].0.clone());
+    let res = compare(&packets[0].0, &packets[1].0);
+    if let Some(x) = res {
+        if x {
+            sum += counter;
+        }
+    }
+    packets.clear();
+    let packet2 = List(vec![List(vec![Num(2)])]);
+    let packet6 = List(vec![List(vec![Num(6)])]);
+    big_packets.push(packet2.clone());
+    big_packets.push(packet6.clone());
+    for i in 0..big_packets.len() {
+        for j in 0..big_packets.len() {
+            if i != j && !compare(&big_packets[i], &big_packets[j]).unwrap() {
+                let tmp = big_packets[i].clone();
+                big_packets[i] = big_packets[j].clone();
+                big_packets[j] = tmp;
+            }
+        }
+    }
+    let mut prod = 1;
+    for (i, p) in big_packets.iter().rev().enumerate() {
+        if *p == packet2 || *p == packet6 {
+            prod *= i + 1;
+        }
+    }
+    println!("{sum} {prod}");
 }
 
 fn main() {
