@@ -1116,6 +1116,7 @@ fn day_15() {
                 None
             }
         }
+        spans.sort_by_key(|x| x.0);
         let mut old_len = spans.len();
         loop {
             let mut sa = spans[0];
